@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Penghitung Honor - Mamang</title>
+  <style>
+    :root{--blue:#0b69ff;--yellow:#ffd600;--white:#ffffff}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:#f4f8ff;color:#073b6a}
+    header{background:linear-gradient(90deg,var(--blue),#4ca3ff);color:var(--white);padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+    header h1{margin:0;font-size:18px}
+    .container{max-width:1100px;margin:18px auto;padding:16px}
+    .card{background:#fff;border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(10,30,60,0.06);margin-bottom:12px}
+    label{display:block;font-size:13px;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:8px;border:1px solid #d6e4ff;border-radius:6px}
+    .row{display:flex;gap:12px}
+    .row > *{flex:1}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:8px;border:1px solid #e6f0ff;text-align:left;font-size:13px}
+    .small{font-size:12px;color:#5b6b85}
+    .btn{display:inline-block;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-yellow{background:var(--yellow);color:#073b6a}
+    .actions button{margin-right:6px}
+    .flex{display:flex;gap:8px;align-items:center}
+    .right{margin-left:auto}
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:center;justify-content:center}
+    .modal .card{width:420px}
+    .nota{background:#fff;padding:10px;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.08)}
+    footer{padding:12px;text-align:center;color:#4a6b8b}
+    .tag{display:inline-block;padding:4px 8px;border-radius:6px;font-size:12px;background:#eef6ff;color:#074b9d}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Penghitung Honor — SMP IT Bustanul Ma'arif</h1>
+    <div class="flex">
+      <span class="tag">Tema: Biru • Putih • Kuning</span>
+      <button id="btnLogout" class="btn" style="margin-left:10px;">Logout</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h3>1) Login / Pengguna</h3>
+      <div id="loginArea">
+        <div class="row">
+          <input id="username" placeholder="Username (default: admin)" />
+          <input id="password" placeholder="Password (default: admin)" type="password" />
+          <button id="btnLogin" class="btn btn-primary">Login</button>
+        </div>
+        <p class="small">Default: <b>admin</b> / <b>admin</b>. Bisa diubah di pengaturan setelah login.</p>
+      </div>
+      <div id="userPanel" style="display:none">
+        <p>Masuk sebagai: <b id="who"></b></p>
+        <button id="openSettings" class="btn">Pengaturan</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>2) Data Dasar (Tarif fleksibel)</h3>
+      <div class="row">
+        <div>
+          <label>Honor per JP (Rp)</label>
+          <input id="rateJP" type="number" value="5000" />
+        </div>
+        <div>
+          <label>Honor Transport default (Rp)</label>
+          <input id="rateTransport" type="number" value="0" />
+        </div>
+        <div>
+          <label>Honor Jabatan default (Rp)</label>
+          <input id="rateJabatan" type="number" value="0" />
+        </div>
+      </div>
+      <div class="small">Simpan untuk menjadikan nilai sebagai default.</div>
+      <div style="margin-top:8px"><button id="saveRates" class="btn btn-primary">Simpan Tarif</button>
+      <button id="exportSettings" class="btn">Export Settings</button></div>
+    </div>
+
+    <div class="card">
+      <h3>3) Manajemen Guru</h3>
+      <div class="row">
+        <input id="guruName" placeholder="Nama guru" />
+        <input id="guruMapel" placeholder="Mata pelajaran" />
+        <button id="addGuru" class="btn btn-primary">Tambah Guru</button>
+      </div>
+      <table id="tableGuru" style="margin-top:12px">
+        <thead><tr><th>Nama</th><th>Mapel</th><th>Aksi</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>4) Input Honor Harian / Entri</h3>
+      <div class="row">
+        <select id="selectGuru"></select>
+        <input id="dateInput" type="date" />
+        <input id="jpInput" type="number" placeholder="Jumlah JP" />
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="transportInput" type="number" placeholder="Transport (Rp)" />
+        <input id="jabatanInput" type="number" placeholder="Jabatan (Rp)" />
+        <input id="tambahanInput" type="number" placeholder="Tambahan lain (Rp)" />
+      </div>
+      <div style="margin-top:8px"><button id="addEntry" class="btn btn-primary">Simpan Entri</button>
+      <button id="clearEntries" class="btn">Bersihkan Semua Entri</button></div>
+
+      <table id="entriesTable">
+        <thead><tr><th>Tanggal</th><th>Guru</th><th>JP</th><th>Honor JP</th><th>Transport</th><th>Jabatan</th><th>Tambahan</th><th>Total</th><th>Aksi</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>5) Rekap Bulanan per Guru</h3>
+      <div class="row">
+        <select id="monthSelect"></select>
+        <select id="yearSelect"></select>
+        <button id="showRekap" class="btn btn-primary">Tampilkan Rekap</button>
+        <div class="right">
+          <button id="exportPDFAll" class="btn btn-yellow">Download PDF Semua</button>
+          <button id="exportWordAll" class="btn">Download Word Semua</button>
+        </div>
+      </div>
+      <div id="rekapArea" style="margin-top:12px"></div>
+    </div>
+
+    <footer class="small">File single-page. Upload ke GitHub &amp; aktifkan GitHub Pages (branch: main, folder: /)</footer>
+  </div>
+
+  <!-- Nota Modal -->
+  <div id="notaModal" class="modal" style="display:none">
+    <div class="card nota">
+      <div id="notaContent"></div>
+      <div style="margin-top:8px" class="flex"><button id="notaClose" class="btn">Tutup</button><button id="notaPrint" class="btn btn-primary">Cetak / Download PDF</button></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    // Simple app in single file. Data in localStorage.
+    const LS = {
+      users: 'honor_users_v1',
+      settings: 'honor_settings_v1',
+      gurus: 'honor_gurus_v1',
+      entries: 'honor_entries_v1'
+    }
+
+    // defaults
+    const defaults = {
+      rateJP:5000, rateTransport:0, rateJabatan:0
+    }
+
+    function $(id){return document.getElementById(id)}
+
+    // init
+    function loadSettings(){
+      const s = JSON.parse(localStorage.getItem(LS.settings)||'null') || defaults
+      $('rateJP').value = s.rateJP || defaults.rateJP
+      $('rateTransport').value = s.rateTransport || 0
+      $('rateJabatan').value = s.rateJabatan || 0
+    }
+
+    function saveSettings(){
+      const s = {rateJP:+$('rateJP').value||0, rateTransport:+$('rateTransport').value||0, rateJabatan:+$('rateJabatan').value||0}
+      localStorage.setItem(LS.settings, JSON.stringify(s))
+      alert('Tarif disimpan')
+    }
+
+    function loadGurus(){
+      const arr = JSON.parse(localStorage.getItem(LS.gurus)||'[]')
+      const tbody = $('tableGuru').querySelector('tbody'); tbody.innerHTML=''
+      const select = $('selectGuru'); select.innerHTML='<option value="">--Pilih Guru--</option>'
+      arr.forEach((g,idx)=>{
+        const tr=document.createElement('tr')
+        tr.innerHTML=`<td>${g.name}</td><td>${g.mapel}</td><td><button data-idx="${idx}" class="editGuru btn">Edit</button><button data-idx="${idx}" class="delGuru btn">Hapus</button></td>`
+        tbody.appendChild(tr)
+        const opt = document.createElement('option'); opt.value = idx; opt.textContent = g.name + ' — ' + g.mapel; select.appendChild(opt)
+      })
+    }
+
+    function addGuru(){
+      const name = $('guruName').value.trim(); const mapel = $('guruMapel').value.trim();
+      if(!name) return alert('Nama kosong')
+      const arr = JSON.parse(localStorage.getItem(LS.gurus)||'[]')
+      arr.push({name,mapel})
+      localStorage.setItem(LS.gurus, JSON.stringify(arr))
+      $('guruName').value=''; $('guruMapel').value=''
+      loadGurus();
+    }
+
+    function delGuru(i){
+      if(!confirm('Hapus guru ini?')) return
+      const arr = JSON.parse(localStorage.getItem(LS.gurus)||'[]')
+      arr.splice(i,1)
+      localStorage.setItem(LS.gurus, JSON.stringify(arr))
+      loadGurus(); loadEntriesTable();
+    }
+
+    function editGuru(i){
+      const arr = JSON.parse(localStorage.getItem(LS.gurus)||'[]')
+      const g = arr[i]
+      const n = prompt('Nama:', g.name)
+      if(n==null) return
+      const m = prompt('Mapel:', g.mapel)
+      if(m==null) return
+      arr[i]={name:n,mapel:m}
+      localStorage.setItem(LS.gurus, JSON.stringify(arr))
+      loadGurus(); loadEntriesTable();
+    }
+
+    function loadEntriesTable(){
+      const arr = JSON.parse(localStorage.getItem(LS.entries)||'[]')
+      const tbody = $('entriesTable').querySelector('tbody'); tbody.innerHTML=''
+      const s = JSON.parse(localStorage.getItem(LS.settings)||'{}') || defaults
+      arr.forEach((e,idx)=>{
+        const honorJP = (e.jp * (s.rateJP||defaults.rateJP))
+        const total = honorJP + (+e.transport||0) + (+e.jabatan||0) + (+e.tambahan||0)
+        const tr=document.createElement('tr')
+        tr.innerHTML = `<td>${e.date}</td><td>${e.guruName}</td><td>${e.jp}</td><td>${numberFormat(honorJP)}</td><td>${numberFormat(e.transport)}</td><td>${numberFormat(e.jabatan)}</td><td>${numberFormat(e.tambahan)}</td><td>${numberFormat(total)}</td><td class="actions"><button data-idx="${idx}" class="btn notaBtn">Nota</button><button data-idx="${idx}" class="btn editEntry">Edit</button><button data-idx="${idx}" class="btn" style="background:#ffdddd" data-action="del">Hapus</button></td>`
+        tbody.appendChild(tr)
+      })
+    }
+
+    function numberFormat(v){return 'Rp ' + (Number(v)||0).toLocaleString('id-ID')}
+
+    function addEntry(){
+      const gIdx = $('selectGuru').value
+      if(gIdx==='') return alert('Pilih guru')
+      const gurus = JSON.parse(localStorage.getItem(LS.gurus)||'[]')
+      const guruName = gurus[gIdx].name
+      const date = $('dateInput').value || new Date().toISOString().slice(0,10)
+      const jp = +$('jpInput').value || 0
+      const transport = +$('transportInput').value || 0
+      const jabatan = +$('jabatanInput').value || 0
+      const tambahan = +$('tambahanInput').value || 0
+      const arr = JSON.parse(localStorage.getItem(LS.entries)||'[]')
+      arr.push({guruIdx:gIdx,guruName,date,jp,transport,jabatan,tambahan,created:Date.now()})
+      localStorage.setItem(LS.entries, JSON.stringify(arr))
+      loadEntriesTable();
+      alert('Entri tersimpan')
+    }
+
+    function clearEntries(){ if(!confirm('Hapus semua entri?')) return; localStorage.removeItem(LS.entries); loadEntriesTable(); }
+
+    function openNota(i){
+      const arr = JSON.parse(localStorage.getItem(LS.entries)||'[]')
+      const s = JSON.parse(localStorage.getItem(LS.settings)||'{}') || defaults
+      const e = arr[i]
+      if(!e) return
+      const honorJP = e.jp * (s.rateJP||defaults.rateJP)
+      const total = honorJP + (+e.transport||0) + (+e.jabatan||0) + (+e.tambahan||0)
+      const html = `<h4>NOTA — ${e.guruName}</h4><div class=small>Tanggal: ${e.date}</div><hr><table><tr><td>JP</td><td>${e.jp}</td></tr><tr><td>Honor JP</td><td>${numberFormat(honorJP)}</td></tr><tr><td>Transport</td><td>${numberFormat(e.transport)}</td></tr><tr><td>Jabatan</td><td>${numberFormat(e.jabatan)}</td></tr><tr><td>Tambahan</td><td>${numberFormat(e.tambahan)}</td></tr><tr><th>Total</th><th>${numberFormat(total)}</th></tr></table>`
+      $('notaContent').innerHTML = html
+      $('notaModal').style.display='flex'
+      $('notaPrint').onclick = ()=>{ printNotaHTML(html, e.guruName+'-'+e.date) }
+    }
+
+    function printNotaHTML(html, name){
+      // use html2canvas + jspdf
+      const wrapper = document.createElement('div'); wrapper.style.background='#fff'; wrapper.style.padding='12px'; wrapper.innerHTML = html
+      document.body.appendChild(wrapper)
+      html2canvas(wrapper).then(canvas=>{
+        const img = canvas.toDataURL('image/png')
+        const { jsPDF } = window.jspdf
+        const pdf = new jsPDF({unit:'mm', format:'a4'})
+        const w = pdf.internal.pageSize.getWidth(); const h = pdf.internal.pageSize.getHeight();
+        const imgW = w-20; const imgH = canvas.height * imgW / canvas.width
+        pdf.addImage(img, 'PNG', 10, 10, imgW, imgH)
+        pdf.save(name + '.pdf')
+        wrapper.remove()
+      })
+    }
+
+    function editEntry(i){
+      const arr = JSON.parse(localStorage.getItem(LS.entries)||'[]')
+      const e = arr[i]
+      const jp = prompt('JP', e.jp); if(jp==null) return
+      const transport = prompt('Transport (Rp)', e.transport); if(transport==null) return
+      const jabatan = prompt('Jabatan (Rp)', e.jabatan); if(jabatan==null) return
+      const tambahan = prompt('Tambahan (Rp)', e.tambahan); if(tambahan==null) return
+      e.jp = +jp; e.transport=+transport; e.jabatan=+jabatan; e.tambahan=+tambahan
+      arr[i]=e; localStorage.setItem(LS.entries, JSON.stringify(arr)); loadEntriesTable();
+    }
+
+    function deleteEntry(i){ if(!confirm('Hapus entri ini?')) return; const arr = JSON.parse(localStorage.getItem(LS.entries)||'[]'); arr.splice(i,1); localStorage.setItem(LS.entries, JSON.stringify(arr)); loadEntriesTable(); }
+
+    function populateMonthYear(){
+      const ms = $('monthSelect'); ms.innerHTML=''
+      for(let m=1;m<=12;m++){ const o=document.createElement('option'); o.value=m; o.textContent=m; ms.appendChild(o)}
+      const ys = $('yearSelect'); ys.innerHTML=''
+      const yearNow = new Date().getFullYear()
+      for(let y=yearNow-3;y<=yearNow+1;y++){ const o=document.createElement('option'); o.value=y; o.textContent=y; ys.appendChild(o)}
+      $('monthSelect').value = new Date().getMonth()+1; $('yearSelect').value = yearNow
+    }
+
+    function showRekap(){
+      const month = +$('monthSelect').value; const year = +$('yearSelect').value
+      const arr = JSON.parse(localStorage.getItem(LS.entries)||'[]')
+      const s = JSON.parse(localStorage.getItem(LS.settings)||'{}') || defaults
+      // group by guru
+      const byGuru = {}
+      arr.forEach((e,idx)=>{
+        const d = new Date(e.date)
+        if(d.getMonth()+1 !== month || d.getFullYear() !== year) return
+        if(!byGuru[e.guruName]) byGuru[e.guruName]=[]
+        byGuru[e.guruName].push({...e, idx})
+      })
+      const container = $('rekapArea'); container.innerHTML=''
+      for(const [guru, list] of Object.entries(byGuru)){
+        let sum=0
+        const table=document.createElement('table'); table.innerHTML = `<thead><tr><th>Tanggal</th><th>JP</th><th>Honor JP</th><th>Transport</th><th>Jabatan</th><th>Tambahan</th><th>Total</th><th>Aksi</th></tr></thead>`
+        const tb=document.createElement('tbody')
+        list.forEach(item=>{
+          const honorJP = item.jp * (s.rateJP||defaults.rateJP)
+          const total = honorJP + (+item.transport||0) + (+item.jabatan||0) + (+item.tambahan||0)
+          sum += total
+          const tr=document.createElement('tr')
+          tr.innerHTML = `<td>${item.date}</td><td>${item.jp}</td><td>${numberFormat(honorJP)}</td><td>${numberFormat(item.transport)}</td><td>${numberFormat(item.jabatan)}</td><td>${numberFormat(item.tambahan)}</td><td>${numberFormat(total)}</td><td><button data-idx="${item.idx}" class="btn notaBtn">Nota</button><button data-idx="${item.idx}" class="btn editEntry">Edit</button><button data-idx="${item.idx}" class="btn" style="background:#ffdddd" data-action="del">Hapus</button></td>`
+          tb.appendChild(tr)
+        })
+        table.appendChild(tb)
+        const wrapper = document.createElement('div'); wrapper.className='card'; wrapper.style.marginBottom='8px'
+        wrapper.innerHTML = `<h4>${guru} — Total: ${numberFormat(sum)}</h4>`
+        wrapper.appendChild(table)
+        const btns = document.createElement('div'); btns.className='flex'; btns.style.marginTop='8px'
+        const b1 = document.createElement('button'); b1.className='btn btn-primary'; b1.textContent='Download Nota Guru (PDF)'; b1.onclick = ()=>downloadNotaGuru(guru, list, s)
+        const b2 = document.createElement('button'); b2.className='btn'; b2.textContent='Download Nota Guru (Word)'; b2.onclick = ()=>downloadNotaGuruWord(guru, list, s)
+        btns.appendChild(b1); btns.appendChild(b2)
+        wrapper.appendChild(btns)
+        container.appendChild(wrapper)
+      }
+      if(Object.keys(byGuru).length===0) container.innerHTML='<div class="small">Tidak ada data pada bulan ini.</div>'
+    }
+
+    async function downloadNotaGuru(guru, list, s){
+      // create a simple HTML block
+      const html = `<div style="padding:12px;background:#fff;color:#073b6a"><h3>Nota Bulanan — ${guru}</h3><div>Bulan: ${$('monthSelect').value}/${$('yearSelect').value}</div><table style="width:100%;border-collapse:collapse;margin-top:8px"><thead><tr><th>Tanggal</th><th>JP</th><th>Honor JP</th><th>Transport</th><th>Jabatan</th><th>Tambahan</th><th>Total</th></tr></thead><tbody>` + list.map(it=>{const honorJP=it.jp*(s.rateJP||defaults.rateJP); const total=honorJP+(+it.transport||0)+(+it.jabatan||0)+(+it.tambahan||0); return `<tr><td>${it.date}</td><td>${it.jp}</td><td>${numberFormat(honorJP)}</td><td>${numberFormat(it.transport)}</td><td>${numberFormat(it.jabatan)}</td><td>${numberFormat(it.tambahan)}</td><td>${numberFormat(total)}</td></tr>`}).join('') + `</tbody></table>`
+      // render and pdf
+      const wrapper = document.createElement('div'); wrapper.style.padding='16px'; wrapper.style.background='#fff'; wrapper.innerHTML = html
+      document.body.appendChild(wrapper)
+      const canvas = await html2canvas(wrapper)
+      const img = canvas.toDataURL('image/png')
+      const { jsPDF } = window.jspdf
+      const pdf = new jsPDF({unit:'mm', format:'a4'})
+      const imgW = pdf.internal.pageSize.getWidth()-20; const imgH = canvas.height * imgW / canvas.width
+      pdf.addImage(img,'PNG',10,10,imgW,imgH)
+      pdf.save(guru + '-rekap-'+$('monthSelect').value+'-'+$('yearSelect').value+'.pdf')
+      wrapper.remove()
+    }
+
+    function downloadNotaGuruWord(guru, list, s){
+      const html = `<h1>Nota Bulanan — ${guru}</h1><div>Bulan: ${$('monthSelect').value}/${$('yearSelect').value}</div>` + '<table border="1"><thead><tr><th>Tanggal</th><th>JP</th><th>Honor JP</th><th>Transport</th><th>Jabatan</th><th>Tambahan</th><th>Total</th></tr></thead><tbody>' + list.map(it=>{const honorJP=it.jp*(s.rateJP||defaults.rateJP); const total=honorJP+(+it.transport||0)+(+it.jabatan||0)+(+it.tambahan||0); return `<tr><td>${it.date}</td><td>${it.jp}</td><td>${numberFormat(honorJP)}</td><td>${numberFormat(it.transport)}</td><td>${numberFormat(it.jabatan)}</td><td>${numberFormat(it.tambahan)}</td><td>${numberFormat(total)}</td></tr>`}).join('') + '</tbody></table>'
+      const blob = new Blob(['\uFEFF', html], {type:'application/msword'})
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a'); a.href=url; a.download = guru + '-rekap-'+$('monthSelect').value+'-'+$('yearSelect').value+'.doc'; a.click(); URL.revokeObjectURL(url)
+    }
+
+    // export all (pdf/word all gurus combined)
+    async function exportPDFAll(){
+      // build combined html
+      const month = +$('monthSelect').value; const year=+$('yearSelect').value
+      const arr = JSON.parse(localStorage.getItem(LS.entries)||'[]')
+      const s = JSON.parse(localStorage.getItem(LS.settings)||'{}') || defaults
+      const byGuru = {}
+      arr.forEach(e=>{const d=new Date(e.date); if(d.getMonth()+1!==month||d.getFullYear()!==year) return; if(!byGuru[e.guruName]) byGuru[e.guruName]=[]; byGuru[e.guruName].push(e)})
+      let fullHtml = ''
+      for(const [guru,list] of Object.entries(byGuru)){
+        fullHtml += `<h2>${guru}</h2><table border="1" style="width:100%"><thead><tr><th>Tanggal</th><th>JP</th><th>Honor JP</th><th>Transport</th><th>Jabatan</th><th>Tambahan</th><th>Total</th></tr></thead><tbody>` + list.map(it=>{const honorJP=it.jp*(s.rateJP||defaults.rateJP); const total=honorJP+(+it.transport||0)+(+it.jabatan||0)+(+it.tambahan||0); return `<tr><td>${it.date}</td><td>${it.jp}</td><td>${numberFormat(honorJP)}</td><td>${numberFormat(it.transport)}</td><td>${numberFormat(it.jabatan)}</td><td>${numberFormat(it.tambahan)}</td><td>${numberFormat(total)}</td></tr>`}).join('') + '</tbody></table><div style="page-break-after:always"></div>'
+      }
+      if(!fullHtml) return alert('Tidak ada data yang cocok')
+      const wrapper=document.createElement('div'); wrapper.style.padding='12px'; wrapper.innerHTML = fullHtml; document.body.appendChild(wrapper)
+      const canvas = await html2canvas(wrapper)
+      const img = canvas.toDataURL('image/png')
+      const { jsPDF } = window.jspdf
+      const pdf = new jsPDF({unit:'mm', format:'a4'})
+      const imgW = pdf.internal.pageSize.getWidth()-20; const imgH = canvas.height * imgW / canvas.width
+      pdf.addImage(img,'PNG',10,10,imgW,imgH)
+      pdf.save('rekap-all-'+$('monthSelect').value+'-'+$('yearSelect').value+'.pdf')
+      wrapper.remove()
+    }
+
+    function exportWordAll(){
+      const month = +$('monthSelect').value; const year=+$('yearSelect').value
+      const arr = JSON.parse(localStorage.getItem(LS.entries)||'[]')
+      const s = JSON.parse(localStorage.getItem(LS.settings)||'{}') || defaults
+      const byGuru = {}
+      arr.forEach(e=>{const d=new Date(e.date); if(d.getMonth()+1!==month||d.getFullYear()!==year) return; if(!byGuru[e.guruName]) byGuru[e.guruName]=[]; byGuru[e.guruName].push(e)})
+      let fullHtml = ''
+      for(const [guru,list] of Object.entries(byGuru)){
+        fullHtml += `<h2>${guru}</h2><table border="1" style="width:100%"><thead><tr><th>Tanggal</th><th>JP</th><th>Honor JP</th><th>Transport</th><th>Jabatan</th><th>Tambahan</th><th>Total</th></tr></thead><tbody>` + list.map(it=>{const honorJP=it.jp*(s.rateJP||defaults.rateJP); const total=honorJP+(+it.transport||0)+(+it.jabatan||0)+(+it.tambahan||0); return `<tr><td>${it.date}</td><td>${it.jp}</td><td>${numberFormat(honorJP)}</td><td>${numberFormat(it.transport)}</td><td>${numberFormat(it.jabatan)}</td><td>${numberFormat(it.tambahan)}</td><td>${numberFormat(total)}</td></tr>`}).join('') + '</tbody></table><div style="page-break-after:always"></div>'
+      }
+      if(!fullHtml) return alert('Tidak ada data yang cocok')
+      const blob = new Blob(['\uFEFF', fullHtml], {type:'application/msword'})
+      const url = URL.createObjectURL(blob)
+      const a=document.createElement('a'); a.href=url; a.download='rekap-all-'+$('monthSelect').value+'-'+$('yearSelect').value+'.doc'; a.click(); URL.revokeObjectURL(url)
+    }
+
+    // tiny login system: default admin/admin
+    function initLogin(){
+      const users = JSON.parse(localStorage.getItem(LS.users)||'null') || {admin:'admin'}
+      localStorage.setItem(LS.users, JSON.stringify(users))
+      $('btnLogin').onclick = ()=>{
+        const u=$('username').value||'admin'; const p=$('password').value||'admin';
+        const us = JSON.parse(localStorage.getItem(LS.users)||'{}')
+        if(us[u] && us[u]===p){
+          // success
+          $('loginArea').style.display='none'; $('userPanel').style.display='block'; $('who').textContent=u
+        } else alert('Login gagal')
+      }
+      $('btnLogout').onclick = ()=>{ $('loginArea').style.display='block'; $('userPanel').style.display='none'; $('username').value=''; $('password').value=''; }
+    }
+
+    // event delegation
+    document.addEventListener('click', (e)=>{
+      if(e.target.matches('#addGuru')) addGuru()
+      if(e.target.matches('.delGuru')) delGuru(e.target.dataset.idx)
+      if(e.target.matches('.editGuru')) editGuru(e.target.dataset.idx)
+      if(e.target.matches('#saveRates')) saveSettings()
+      if(e.target.matches('#addEntry')) addEntry()
+      if(e.target.matches('#clearEntries')) clearEntries()
+      if(e.target.matches('.notaBtn')) openNota(e.target.dataset.idx)
+      if(e.target.matches('#notaClose')) $('notaModal').style.display='none'
+      if(e.target.matches('.editEntry')) editEntry(e.target.dataset.idx)
+      if(e.target.matches('[data-action="del"]')) deleteEntry(e.target.closest('tr') ? e.target.dataset.idx : e.target.dataset.idx)
+      if(e.target.matches('#showRekap')) showRekap()
+      if(e.target.matches('#exportPDFAll')) exportPDFAll()
+      if(e.target.matches('#exportWordAll')) exportWordAll()
+      if(e.target.matches('#notaPrint')){
+        // handled earlier
+      }
+      if(e.target.matches('#openSettings')){
+        const newUser = prompt('Buat user login baru (format username,password) — kosongkan untuk batal')
+        if(newUser){ const [u,p]=newUser.split(','); if(u&&p){ const us=JSON.parse(localStorage.getItem(LS.users)||'{}'); us[u]=p; localStorage.setItem(LS.users, JSON.stringify(us)); alert('User tersimpan') }}
+      }
+      if(e.target.matches('#exportSettings')){
+        const s = localStorage.getItem(LS.settings)||'{}'
+        const blob = new Blob([s], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='settings.json'; a.click();
+      }
+    })
+
+    // initialize
+    loadSettings(); loadGurus(); loadEntriesTable(); populateMonthYear(); initLogin();
+
+  </script>
+</body>
+</html>
